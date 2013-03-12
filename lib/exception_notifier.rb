@@ -21,9 +21,13 @@ class ExceptionNotifier
     options = (env['exception_notifier.options'] ||= {})
     options.reverse_merge!(@options)
 
-    unless Array.wrap(options[:ignore_exceptions]).include?(exception.class)
-      Notifier.exception_notification(env, exception).deliver
-      env['exception_notifier.delivered'] = true
+    begin
+      unless Array.wrap(options[:ignore_exceptions]).include?(exception.class)
+        Notifier.exception_notification(env, exception).deliver
+        env['exception_notifier.delivered'] = true
+      end
+    rescue Exception => mail_exception
+      logger.error "There was an error while sending exception details #{mail_exception}\n #{mail_exception.backtrace}"
     end
 
     raise exception
